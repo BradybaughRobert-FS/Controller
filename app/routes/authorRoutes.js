@@ -5,7 +5,7 @@ const {
     getAuthorById,
     updateAuthor,
     deleteAuthor,
-} = require('../controller/authorController'); 
+} = require('../Controller/authorController'); 
 
 router.get('/', getAllAuthors);
 
