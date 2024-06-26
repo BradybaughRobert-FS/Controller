@@ -2,7 +2,35 @@ const Authors = require('../models/authors');
 
 const getAllAuthors = async (req, res) => { 
     try {
-        const authors = await Authors.find({});
+        
+
+    let  querString = JSON.stringify(req.query);
+
+    querString = querString.replace(
+        /\b(gt|gte|lt|lte)\b/g,
+        (match) => '$${match'
+    );
+    console.log(JSON.parse(querString));
+
+    let query = Authors.find(JSON.parse(querString));
+    
+    if (req.query.select){
+        const fields = req.query.select.split(',').join(' ');
+        query = Authors.find({}).select(fields);
+    }
+
+    if (req.query.sort){
+        const sortBy = req.query.sort.split(',').join(' ');
+        query = Authors.find({}).sort(sortBy);
+    }
+
+    const page = parseInt(req.query.page)  || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const skip = (page - 1) * limit;
+
+    query.skip(skip).limit(limit);
+
+        const authors = await query;
         res.status(200).json({
             data: authors,
             success: true,
