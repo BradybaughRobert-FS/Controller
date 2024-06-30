@@ -2,33 +2,32 @@ const Authors = require('../models/authors');
 
 const getAllAuthors = async (req, res) => { 
     try {
-        
+        let queryString = JSON.stringify(req.query);
 
-    let  querString = JSON.stringify(req.query);
+        queryString = queryString.replace(
+            /\b(gt|gte|lt|lte)\b/g,
+            (match) => `$${match}`
+        );
+        const parsedQuery = JSON.parse(queryString);
+        console.log(parsedQuery);
 
-    querString = querString.replace(
-        /\b(gt|gte|lt|lte)\b/g,
-        (match) => '$${match'
-    );
-    console.log(JSON.parse(querString));
+        let query = Authors.find(parsedQuery);
 
-    let query = Authors.find(JSON.parse(querString));
-    
-    if (req.query.select){
-        const fields = req.query.select.split(',').join(' ');
-        query = Authors.find({}).select(fields);
-    }
+        if (req.query.select){
+            const fields = req.query.select.split(',').join(' ');
+            query = query.select(fields);
+        }
 
-    if (req.query.sort){
-        const sortBy = req.query.sort.split(',').join(' ');
-        query = Authors.find({}).sort(sortBy);
-    }
+        if (req.query.sort){
+            const sortBy = req.query.sort.split(',').join(' ');
+            query = query.sort(sortBy);
+        }
 
-    const page = parseInt(req.query.page)  || 1;
-    const limit = parseInt(req.query.limit) || 2;
-    const skip = (page - 1) * limit;
+        const page = parseInt(req.query.page)  || 1;
+        const limit = parseInt(req.query.limit) || 2;
+        const skip = (page - 1) * limit;
 
-    query.skip(skip).limit(limit);
+        query.skip(skip).limit(limit);
 
         const authors = await query;
         res.status(200).json({
@@ -71,10 +70,10 @@ const createAuthor = async (req, res) => {
     const { author } = req.body;
     try {
         const newAuthor = await Authors.create(author);
-        res.status(200).json({
+        res.status(201).json({
             data: newAuthor,
             success: true,
-            message: `${req.method} - Request to author endpoint`
+            message: `${req.method} - Created new author`
         });
     } catch (error) {
         res.status(500).json({
@@ -97,7 +96,7 @@ const updateAuthor = async (req, res) => {
         res.status(200).json({
             data: author,
             success: true,
-            message: `${req.method} - Request to author endpoint with id`
+            message: `${req.method} - Updated author with id ${id}`
         });
     } catch (error) {
         res.status(500).json({
@@ -120,7 +119,7 @@ const deleteAuthor = async (req, res) => {
         res.status(200).json({
             data: author,
             success: true,
-            message: `${req.method} - Request to author endpoint with id`
+            message: `${req.method} - Deleted author with id ${id}`
         });
     } catch (error) {
         res.status(500).json({
@@ -130,11 +129,10 @@ const deleteAuthor = async (req, res) => {
     }
 };
 
-const addBooksToAuthor = async (req, res) => {
+const addMangaToAuthor = async (req, res) => {  // Renamed from addBooksToAuthor
     const { id } = req.params;
-    const { books } = req.body;
+    const { manga } = req.body;  // Changed from books to manga
     try {
-        // Find author by ID
         const author = await Authors.findById(id);
 
         if (!author) {
@@ -144,17 +142,14 @@ const addBooksToAuthor = async (req, res) => {
             });
         }
 
-        // Update author's books array
-        author.books.push(...books); // Assuming books is an array of strings
+        author.manga.push(...manga);  // Changed from books to manga
 
-        // Save updated author to database
         const updatedAuthor = await author.save();
 
-        // Respond with updated author
         res.status(200).json({
             data: updatedAuthor,
             success: true,
-            message: `${req.method} - Added books to author with id ${id}`
+            message: `${req.method} - Added manga to author with id ${id}`
         });
     } catch (error) {
         res.status(500).json({
@@ -170,5 +165,5 @@ module.exports = {
     getAuthorById,
     updateAuthor,
     deleteAuthor,
-    addBooksToAuthor, // Ensure this function is exported
+    addMangaToAuthor,  // Renamed from addBooksToAuthor
 };
